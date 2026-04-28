@@ -4,731 +4,152 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WasteWiseWeb — Admin Dashboard</title>
+
 <style>
-  :root {
-    --bg: #0f1117;
-    --card: #1a1d27;
-    --card2: #1f2333;
-    --border: #2a2f45;
-    --green: #2ecc71;
-    --green-dim: #1a7a42;
-    --blue: #5b8dee;
-    --amber: #f39c12;
-    --red: #e74c3c;
-    --text: #e8eaf0;
-    --muted: #7a7f9a;
-    --shadow: 0 4px 32px rgba(0,0,0,0.4);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0f1117;
+  color:white;
+}
 
-  /* LOGIN SCREEN */
-  #login-screen {
-    position: fixed; inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    z-index: 9999;
-  }
-  .login-box {
-    background: var(--card);
-    border-radius: 20px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 380px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    text-align: center;
-  }
-  .login-icon {
-    font-size: 2.5rem;
-    margin-bottom: 16px;
-  }
-  .login-title {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
-    margin-bottom: 4px;
-    color: var(--text);
-  }
-  .login-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 28px; }
-  .login-input {
-    width: 100%;
-    background: var(--bg);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 13px 16px;
-    font-family: monospace;
-    font-size: 1rem;
-    letter-spacing: 3px;
-    color: var(--text);
-    text-align: center;
-    outline: none;
-    margin-bottom: 14px;
-    transition: border-color 0.2s;
-  }
-  .login-input:focus { border-color: var(--green); }
-  .login-btn {
-    width: 100%;
-    background: var(--green);
-    color: #0f1117;
-    border: none;
-    border-radius: 10px;
-    padding: 13px;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .login-btn:hover { opacity: 0.88; }
-  .login-error {
-    color: var(--red);
-    font-size: 0.82rem;
-    margin-top: 10px;
-    display: none;
-  }
-  .login-hint {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 20px;
-    line-height: 1.5;
-  }
+/* LOGIN */
+#login-screen {
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#0f1117;
+}
+.login-box {
+  background:#1a1d27;
+  padding:30px;
+  border-radius:12px;
+  text-align:center;
+}
+input {
+  padding:10px;
+  margin:10px 0;
+  width:200px;
+}
+button {
+  padding:10px 20px;
+  cursor:pointer;
+}
 
-  /* DASHBOARD */
-  #dashboard { display: none; }
+/* DASHBOARD */
+#dashboard { display:none; padding:20px; }
 
-  /* HEADER */
-  header {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 0 28px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .hdr-left { display: flex; align-items: center; gap: 12px; }
-  .logo {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--text);
-  }
-  .logo span { color: var(--green); }
-  .admin-badge {
-    background: rgba(46,204,113,0.15);
-    color: var(--green);
-    border: 1px solid rgba(46,204,113,0.3);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    padding: 3px 9px;
-    border-radius: 100px;
-    text-transform: uppercase;
-  }
-  .hdr-right { display: flex; align-items: center; gap: 12px; }
-  #live-clock {
-    font-family: monospace;
-    font-size: 0.85rem;
-    color: var(--muted);
-  }
-  .logout-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .logout-btn:hover { color: var(--red); border-color: var(--red); }
-
-  /* CONTENT */
-  .content { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
-
-  /* STATS */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 28px;
-  }
-  .stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-  }
-  .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .stat-value {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1;
-  }
-  .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
-  .stat-card.green .stat-value { color: var(--green); }
-  .stat-card.blue .stat-value { color: var(--blue); }
-  .stat-card.amber .stat-value { color: var(--amber); }
-
-  /* CONTROLS */
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  .search-box {
-    flex: 1;
-    min-width: 200px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 0.88rem;
-    outline: none;
-  }
-  .search-box::placeholder { color: var(--muted); }
-  .search-box:focus { border-color: var(--green); }
-  .filter-select {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 0.88rem;
-    outline: none;
-    cursor: pointer;
-  }
-  .export-btn {
-    background: rgba(91,141,238,0.12);
-    border: 1px solid rgba(91,141,238,0.3);
-    color: var(--blue);
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .export-btn:hover { background: rgba(91,141,238,0.2); }
-  .refresh-btn {
-    background: rgba(46,204,113,0.12);
-    border: 1px solid rgba(46,204,113,0.3);
-    color: var(--green);
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .refresh-btn:hover { background: rgba(46,204,113,0.2); }
-
-  /* DATE GROUP */
-  .date-group { margin-bottom: 28px; }
-  .date-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-  }
-  .date-label {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text);
-  }
-  .date-count {
-    background: var(--card2);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 0.72rem;
-    padding: 2px 9px;
-    border-radius: 100px;
-    font-weight: 600;
-  }
-
-  /* TABLE */
-  .table-wrap {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead { background: var(--card2); }
-  th {
-    padding: 12px 16px;
-    text-align: left;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  td {
-    padding: 13px 16px;
-    font-size: 0.85rem;
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-  }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .token-cell {
-    font-family: monospace;
-    font-size: 0.82rem;
-    color: var(--green);
-    font-weight: 500;
-  }
-  .meal-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 100px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-  .meal-breakfast { background: rgba(243,156,18,0.15); color: var(--amber); }
-  .meal-lunch { background: rgba(46,204,113,0.15); color: var(--green); }
-  .meal-snacks { background: rgba(91,141,238,0.15); color: var(--blue); }
-  .meal-dinner { background: rgba(155,89,182,0.15); color: #b07ecf; }
-  .phone-cell { font-family: monospace; font-size: 0.82rem; }
-  .bid-cell { font-family: monospace; font-size: 0.78rem; color: var(--muted); }
-  .amount-cell { color: var(--green); font-weight: 600; }
-  .view-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .view-btn:hover { color: var(--text); border-color: var(--text); }
-
-  /* EMPTY / LOADING */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.9rem; }
-  .loading-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-    font-size: 0.9rem;
-  }
-
-  /* RECEIPT MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(6px);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.show { display: flex; }
-  .receipt-modal {
-    background: white;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 400px;
-    overflow: hidden;
-  }
-  .r-header {
-    background: #1a6b3a;
-    color: white;
-    padding: 20px 24px 16px;
-  }
-  .r-header h2 { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 1.1rem; font-weight: 800; }
-  .r-header p { font-size: 0.8rem; opacity: 0.75; margin-top: 2px; }
-  .r-body { padding: 20px 24px; }
-  .r-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; }
-  .r-row:last-child { border-bottom: none; }
-  .r-key { color: #6b7b6b; }
-  .r-val { font-weight: 600; text-align: right; }
-  .r-token {
-    background: #e8f5ee;
-    border: 2px dashed #2d9e58;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    margin-bottom: 16px;
-  }
-  .r-token-label { font-size: 0.7rem; color: #6b7b6b; letter-spacing: 1px; text-transform: uppercase; }
-  .r-token-num { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 2rem; font-weight: 800; color: #1a6b3a; }
-  .r-actions { display: flex; gap: 10px; padding: 0 24px 20px; }
-  .r-close { flex:1; background: none; border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px; cursor: pointer; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 600; font-size: 0.88rem; color: #333; }
-  .r-print { flex:1; background: #1a6b3a; border: none; border-radius: 10px; padding: 10px; cursor: pointer; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 600; font-size: 0.88rem; color: white; }
-
-  /* SUPABASE CONFIG NOTICE */
-  .config-notice {
-    background: rgba(243,156,18,0.08);
-    border: 1px solid rgba(243,156,18,0.3);
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
-    font-size: 0.82rem;
-    color: var(--amber);
-    display: none;
-  }
-  .config-notice strong { display: block; margin-bottom: 4px; }
-
-  @media (max-width: 640px) {
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-    th:nth-child(5), td:nth-child(5),
-    th:nth-child(6), td:nth-child(6) { display: none; }
-  }
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+th, td {
+  border:1px solid #333;
+  padding:10px;
+}
+th { background:#1a1d27; }
 </style>
 </head>
+
 <body>
 
-<!-- ======================== LOGIN SCREEN ======================== -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-icon">🔐</div>
-    <div class="login-title">Admin Dashboard</div>
-    <div class="login-sub">WasteWiseWeb · Authorized Access Only</div>
-    <input type="password" class="login-input" id="pass-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Access Dashboard →</button>
-    <div class="login-error" id="login-error">❌ Incorrect password. Try again.</div>
-    <div class="login-hint">Only the admin with the correct password can access this dashboard. All booking records are stored here.</div>
+    <h2>Admin Login</h2>
+    <input type="password" id="password" placeholder="Enter password"><br>
+    <button onclick="login()">Login</button>
+    <p id="error" style="color:red;display:none;">Wrong password</p>
   </div>
 </div>
 
-<!-- ======================== DASHBOARD ======================== -->
+<!-- DASHBOARD -->
 <div id="dashboard">
-  <header>
-    <div class="hdr-left">
-      <div class="logo">Waste<span>Wise</span>Web</div>
-      <div class="admin-badge">Admin</div>
-    </div>
-    <div class="hdr-right">
-      <div id="live-clock"></div>
-      <button class="logout-btn" onclick="doLogout()">Log Out</button>
-    </div>
-  </header>
+  <h1>📊 Admin Dashboard</h1>
 
-  <div class="content">
-    <!-- Config notice for demo mode -->
-    <div class="config-notice" id="config-notice">
-      <strong>⚙️ Demo Mode — Supabase not configured</strong>
-      Replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY in both HTML files to connect real data.
-    </div>
+  <input type="text" id="search" placeholder="Search..." oninput="render()">
 
-    <!-- STATS -->
-    <div class="stats-grid">
-      <div class="stat-card green">
-        <div class="stat-label">Total Bookings</div>
-        <div class="stat-value" id="stat-total">—</div>
-        <div class="stat-sub">All time</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-label">Today's Bookings</div>
-        <div class="stat-value" id="stat-today">—</div>
-        <div class="stat-sub" id="stat-today-date">—</div>
-      </div>
-      <div class="stat-card amber">
-        <div class="stat-label">Total Revenue</div>
-        <div class="stat-value" id="stat-revenue">—</div>
-        <div class="stat-sub">₹80 per guest</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Days Active</div>
-        <div class="stat-value" id="stat-days">—</div>
-        <div class="stat-sub">Unique dates</div>
-      </div>
-    </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Meal</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
 
-    <!-- CONTROLS -->
-    <div class="controls">
-      <input type="text" class="search-box" id="search-box" placeholder="🔍  Search by name, phone, email, token..." oninput="renderTable()">
-      <select class="filter-select" id="meal-filter" onchange="renderTable()">
-        <option value="">All Meals</option>
-        <option value="Breakfast">Breakfast</option>
-        <option value="Lunch">Lunch</option>
-        <option value="Snacks">Snacks</option>
-        <option value="Dinner">Dinner</option>
-      </select>
-      <input type="date" class="filter-select" id="date-filter" onchange="renderTable()">
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
-      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
-    </div>
-
-    <!-- DATA TABLE -->
-    <div id="table-area">
-      <div class="loading-state">Loading records…</div>
-    </div>
-  </div>
-</div>
-
-<!-- RECEIPT MODAL -->
-<div class="modal-overlay" id="receipt-overlay" onclick="if(event.target===this)closeReceipt()">
-  <div class="receipt-modal">
-    <div class="r-header">
-      <h2>Booking Receipt</h2>
-      <p>WasteWiseWeb Guest Meal</p>
-    </div>
-    <div class="r-body" id="r-body"></div>
-    <div class="r-actions">
-      <button class="r-close" onclick="closeReceipt()">Close</button>
-      <button class="r-print" onclick="window.print()">🖨 Print</button>
-    </div>
-  </div>
+  <button onclick="exportCSV()">Export CSV</button>
 </div>
 
 <script>
-// ============================================================
-// CONFIG — must match wastewiseweb.html
-// ============================================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const ADMIN_PASSWORD = 'wastewise@admin2025';
+const ADMIN_PASSWORD = "admin123";
 
-// ============================================================
-// AUTH
-// ============================================================
-let isLoggedIn = false;
-let allRecords = [];
-
-function doLogin() {
-  const val = document.getElementById('pass-input').value;
-  if (val === ADMIN_PASSWORD) {
-    isLoggedIn = true;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    startClock();
+// LOGIN
+function login() {
+  const pass = document.getElementById("password").value;
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
     loadData();
   } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('pass-input').value = '';
-    setTimeout(() => { document.getElementById('login-error').style.display = 'none'; }, 3000);
+    document.getElementById("error").style.display = "block";
   }
 }
 
-function doLogout() {
-  isLoggedIn = false;
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('pass-input').value = '';
+// DEMO DATA (replace with Supabase later)
+let data = [];
+
+function loadData() {
+  data = [
+    {name:"Lakshya", phone:"9876543210", meal:"Lunch", date:"2025-04-28"},
+    {name:"Rahul", phone:"9123456780", meal:"Dinner", date:"2025-04-28"},
+    {name:"Aman", phone:"9012345678", meal:"Breakfast", date:"2025-04-27"}
+  ];
+  render();
 }
 
-document.getElementById('pass-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
+// RENDER TABLE
+function render() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const filtered = data.filter(d =>
+    (d.name + d.phone + d.meal).toLowerCase().includes(search)
+  );
 
-// Clock
-function startClock() {
-  function tick() {
-    const n = new Date();
-    document.getElementById('live-clock').textContent =
-      n.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  }
-  tick(); setInterval(tick, 1000);
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+
+  filtered.forEach(d => {
+    table.innerHTML += `
+      <tr>
+        <td>${d.name}</td>
+        <td>${d.phone}</td>
+        <td>${d.meal}</td>
+        <td>${d.date}</td>
+      </tr>
+    `;
+  });
 }
 
-// ============================================================
-// DATA
-// ============================================================
-const DEMO_DATA = [
-  { id:1, booking_id:'BK001ABC', name:'Arjun Sharma', phone:'9876543210', email:'arjun@gmail.com', meal_type:'Lunch', token:'WWG-4821', amount:80, booked_at:'2025-04-28T13:10:00Z' },
-  { id:2, booking_id:'BK002DEF', name:'Priya Nair', phone:'9123456780', email:'priya@gmail.com', meal_type:'Lunch', token:'WWG-4822', amount:80, booked_at:'2025-04-28T13:25:00Z' },
-  { id:3, booking_id:'BK003GHI', name:'Rohit Verma', phone:'9012345678', email:'', meal_type:'Dinner', token:'WWG-4823', amount:80, booked_at:'2025-04-28T20:05:00Z' },
-  { id:4, booking_id:'BK004JKL', name:'Sneha Pillai', phone:'8901234567', email:'sneha@email.com', meal_type:'Breakfast', token:'WWG-4824', amount:80, booked_at:'2025-04-27T08:15:00Z' },
-  { id:5, booking_id:'BK005MNO', name:'Karan Mehta', phone:'8765432109', email:'', meal_type:'Snacks', token:'WWG-4825', amount:80, booked_at:'2025-04-27T17:02:00Z' },
-];
-
-async function loadData() {
-  document.getElementById('table-area').innerHTML = '<div class="loading-state">⏳ Loading records from database…</div>';
-
-  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-    document.getElementById('config-notice').style.display = 'block';
-    allRecords = DEMO_DATA;
-  } else {
-    document.getElementById('config-notice').style.display = 'none';
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/guest_bookings?select=*&order=booked_at.desc`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
-      );
-      if (!res.ok) throw new Error('Fetch failed');
-      allRecords = await res.json();
-    } catch(e) {
-      document.getElementById('table-area').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Could not load data from Supabase.<br>Check your URL and key.</p></div>';
-      return;
-    }
-  }
-
-  updateStats();
-  renderTable();
-}
-
-function updateStats() {
-  const today = new Date().toISOString().slice(0,10);
-  const todayRecs = allRecords.filter(r => r.booked_at.slice(0,10) === today);
-  const uniqueDates = new Set(allRecords.map(r => r.booked_at.slice(0,10))).size;
-  const totalRev = allRecords.reduce((s,r) => s + (r.amount||80), 0);
-
-  document.getElementById('stat-total').textContent = allRecords.length;
-  document.getElementById('stat-today').textContent = todayRecs.length;
-  document.getElementById('stat-today-date').textContent = new Date().toLocaleDateString('en-IN', { month:'short', day:'numeric' });
-  document.getElementById('stat-revenue').textContent = '₹' + totalRev.toLocaleString('en-IN');
-  document.getElementById('stat-days').textContent = uniqueDates;
-}
-
-function renderTable() {
-  const search = document.getElementById('search-box').value.toLowerCase();
-  const mealF = document.getElementById('meal-filter').value;
-  const dateF = document.getElementById('date-filter').value;
-
-  let filtered = allRecords.filter(r => {
-    const s = (r.name+r.phone+(r.email||'')+(r.token||'')+(r.booking_id||'')).toLowerCase();
-    if (search && !s.includes(search)) return false;
-    if (mealF && r.meal_type !== mealF) return false;
-    if (dateF && r.booked_at.slice(0,10) !== dateF) return false;
-    return true;
+// EXPORT CSV
+function exportCSV() {
+  let csv = "Name,Phone,Meal,Date\n";
+  data.forEach(d => {
+    csv += `${d.name},${d.phone},${d.meal},${d.date}\n`;
   });
 
-  if (filtered.length === 0) {
-    document.getElementById('table-area').innerHTML = `
-      <div class="empty-state">
-        <div class="icon">📭</div>
-        <p>No records found${search ? ' for "'+search+'"' : ''}.</p>
-      </div>`;
-    return;
-  }
-
-  // Group by date
-  const byDate = {};
-  for (const r of filtered) {
-    const d = r.booked_at.slice(0,10);
-    if (!byDate[d]) byDate[d] = [];
-    byDate[d].push(r);
-  }
-  const sortedDates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
-
-  let html = '';
-  for (const date of sortedDates) {
-    const recs = byDate[date];
-    const niceDateLabel = new Date(date + 'T12:00:00').toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    const isToday = date === new Date().toISOString().slice(0,10);
-
-    html += `
-    <div class="date-group">
-      <div class="date-header">
-        <div class="date-label">${niceDateLabel}${isToday?' <span style="color:var(--green);font-size:0.75rem;"> · Today</span>':''}</div>
-        <div class="date-count">${recs.length} booking${recs.length!==1?'s':''}</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Token</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Meal</th>
-              <th>Time</th>
-              <th>Amount</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${recs.map((r, i) => {
-              const t = new Date(r.booked_at);
-              const timeStr = t.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-              const mealClass = 'meal-' + (r.meal_type||'').toLowerCase();
-              return `<tr>
-                <td style="color:var(--muted);font-size:0.78rem;">${i+1}</td>
-                <td class="token-cell">${r.token||'—'}</td>
-                <td style="font-weight:500;">${r.name}</td>
-                <td class="phone-cell">${r.phone}</td>
-                <td><span class="meal-badge ${mealClass}">${r.meal_type||'—'}</span></td>
-                <td style="color:var(--muted);font-size:0.82rem;">${timeStr}</td>
-                <td class="amount-cell">₹${r.amount||80}</td>
-                <td><button class="view-btn" onclick='openReceipt(${JSON.stringify(r)})'>View</button></td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-  }
-
-  document.getElementById('table-area').innerHTML = html;
-}
-
-// ============================================================
-// RECEIPT
-// ============================================================
-function openReceipt(r) {
-  const d = new Date(r.booked_at);
-  const dateStr = d.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  const timeStr = d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-  document.getElementById('r-body').innerHTML = `
-    <div class="r-token">
-      <div class="r-token-label">Token Number</div>
-      <div class="r-token-num">${r.token||'—'}</div>
-    </div>
-    <div class="r-row"><span class="r-key">Booking ID</span><span class="r-val">${r.booking_id||'—'}</span></div>
-    <div class="r-row"><span class="r-key">Name</span><span class="r-val">${r.name}</span></div>
-    <div class="r-row"><span class="r-key">Phone</span><span class="r-val">${r.phone}</span></div>
-    ${r.email ? `<div class="r-row"><span class="r-key">Email</span><span class="r-val">${r.email}</span></div>` : ''}
-    <div class="r-row"><span class="r-key">Meal</span><span class="r-val">${r.meal_type}</span></div>
-    <div class="r-row"><span class="r-key">Date</span><span class="r-val">${dateStr}</span></div>
-    <div class="r-row"><span class="r-key">Time</span><span class="r-val">${timeStr}</span></div>
-    <div class="r-row"><span class="r-key">Amount</span><span class="r-val" style="color:#1a6b3a">₹${r.amount||80}</span></div>
-  `;
-  document.getElementById('receipt-overlay').classList.add('show');
-}
-function closeReceipt() { document.getElementById('receipt-overlay').classList.remove('show'); }
-
-// ============================================================
-// CSV EXPORT
-// ============================================================
-function exportCSV() {
-  if (!allRecords.length) return;
-  const cols = ['booking_id','name','phone','email','meal_type','token','amount','booked_at'];
-  const rows = [cols.join(',')];
-  for (const r of allRecords) {
-    rows.push(cols.map(c => `"${(r[c]||'').toString().replace(/"/g,'""')}"`).join(','));
-  }
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `wastewiseweb-bookings-${new Date().toISOString().slice(0,10)}.csv`;
+  const blob = new Blob([csv]);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "data.csv";
   a.click();
 }
 </script>
+
 </body>
 </html>
