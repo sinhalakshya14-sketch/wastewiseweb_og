@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WasteWise Admin</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>WasteWiseWeb</title>
 
 <style>
 body {
@@ -15,150 +13,107 @@ body {
   color:#e2e8f0;
 }
 
-header {
-  display:flex;
-  justify-content:space-between;
-  padding:20px;
-  background:#020617;
-}
-
-.container {max-width:1100px;margin:auto;padding:20px;}
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:20px;
+.container {
+  max-width:500px;
+  margin:auto;
+  padding:30px;
 }
 
 .card {
   background:#1e293b;
   padding:20px;
   border-radius:12px;
+  margin-top:20px;
 }
 
-/* TABLE */
-table {width:100%;border-collapse:collapse;margin-bottom:30px;}
-th {background:#1e293b;padding:12px;}
-td {padding:12px;border-bottom:1px solid #334155;}
+input, select {
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:8px;
+  background:#0f172a;
+  color:white;
+}
 
-.badge {padding:4px 10px;border-radius:20px;font-size:12px;}
-.lunch {color:#22c55e;}
-.dinner {color:#3b82f6;}
-.breakfast {color:#f59e0b;}
-
-.date-title {
-  margin-top:30px;
-  font-size:18px;
+button {
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
   font-weight:bold;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <h2>Waste<span style="color:#22c55e;">Wise</span>Web</h2>
-</header>
-
 <div class="container">
 
-<!-- STATS -->
-<div class="grid">
-  <div class="card"><p>Total</p><h1 id="total">0</h1></div>
-  <div class="card"><p>Today</p><h1 id="today">0</h1></div>
-  <div class="card"><p>Revenue</p><h1 id="rev">₹0</h1></div>
+<h2>Waste<span style="color:#22c55e;">Wise</span>Web</h2>
+
+<div class="card">
+  <h3>Book Your Meal</h3>
+
+  <input id="name" placeholder="Full Name">
+  <input id="phone" placeholder="Phone Number">
+  <input id="email" placeholder="Email (optional)">
+
+  <select id="meal">
+    <option>Lunch</option>
+    <option>Dinner</option>
+    <option>Breakfast</option>
+  </select>
+
+  <button onclick="bookMeal()">Book Now</button>
+
+  <p id="msg"></p>
 </div>
-
-<!-- CHART -->
-<canvas id="chart"></canvas>
-
-<!-- DATA -->
-<div id="data"></div>
 
 </div>
 
 <script>
-const SUPABASE_URL = "YOUR_URL";
-const SUPABASE_KEY = "YOUR_KEY";
+const SUPABASE_URL = "https://lnlwdgxtmspbtubfaerl.supabase.co";
+const SUPABASE_KEY = "YOUR_PUBLISHABLE_KEY";
 
-async function load(){
+async function bookMeal() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const meal = document.getElementById("meal").value;
+
+  if (!name || !phone) {
+    alert("Fill required fields");
+    return;
+  }
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/guest_bookings`, {
+    method: "POST",
     headers: {
+      "Content-Type": "application/json",
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`
-    }
+    },
+    body: JSON.stringify({
+      name: name,
+      phone: phone,
+      email: email,
+      meal_type: meal,
+      token: "WWG-" + Math.floor(1000 + Math.random()*9000),
+      amount: 80
+    })
   });
 
-  const data = await res.json();
-
-  render(data);
+  if (res.ok) {
+    document.getElementById("msg").innerText = "✅ Booking successful!";
+    document.getElementById("msg").style.color = "lightgreen";
+  } else {
+    document.getElementById("msg").innerText = "❌ Error saving data";
+    document.getElementById("msg").style.color = "red";
+  }
 }
-
-function render(data){
-  let total = data.length;
-  let today = 0;
-  let revenue = total * 80;
-
-  let grouped = {};
-
-  data.forEach(d=>{
-    let date = new Date(d.booked_at);
-    let day = date.toISOString().split('T')[0];
-
-    if(day === new Date().toISOString().split('T')[0]) today++;
-
-    if(!grouped[day]) grouped[day]=[];
-    grouped[day].push(d);
-  });
-
-  document.getElementById("total").innerText = total;
-  document.getElementById("today").innerText = today;
-  document.getElementById("rev").innerText = "₹"+revenue;
-
-  let html = "";
-
-  Object.keys(grouped).sort().reverse().forEach(day=>{
-    html += `<div class="date-title">${day}</div>
-    <table>
-    <tr><th>Name</th><th>Phone</th><th>Meal</th><th>Time</th></tr>`;
-
-    grouped[day].forEach(d=>{
-      let time = new Date(d.booked_at).toLocaleTimeString();
-
-      html += `
-      <tr>
-        <td>${d.name}</td>
-        <td>${d.phone}</td>
-        <td><span class="badge ${d.meal_type.toLowerCase()}">${d.meal_type}</span></td>
-        <td>${time}</td>
-      </tr>`;
-    });
-
-    html += "</table>";
-  });
-
-  document.getElementById("data").innerHTML = html;
-
-  // CHART
-  let counts = {};
-  data.forEach(d=>{
-    let day = new Date(d.booked_at).toISOString().split('T')[0];
-    counts[day] = (counts[day]||0)+1;
-  });
-
-  new Chart(document.getElementById("chart"), {
-    type: 'bar',
-    data: {
-      labels: Object.keys(counts),
-      datasets: [{
-        label: 'Bookings',
-        data: Object.values(counts)
-      }]
-    }
-  });
-}
-
-load();
 </script>
 
 </body>
