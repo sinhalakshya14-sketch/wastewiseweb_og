@@ -5,41 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WasteWise Admin</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body {
   margin:0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family:'Segoe UI';
   background: linear-gradient(135deg,#0f172a,#020617);
   color:#e2e8f0;
 }
 
-/* LOGIN */
-#login {
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.login-box {
-  background:#1e293b;
-  padding:30px;
-  border-radius:14px;
-  text-align:center;
-}
-input {
-  padding:10px;
-  margin:10px;
-  border:none;
-  border-radius:8px;
-  background:#0f172a;
-  color:white;
-}
-button {
-  cursor:pointer;
-}
-
-/* HEADER */
 header {
   display:flex;
   justify-content:space-between;
@@ -47,76 +22,42 @@ header {
   background:#020617;
 }
 
-/* GRID */
-.container {
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
-}
+.container {max-width:1100px;margin:auto;padding:20px;}
+
 .grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
   gap:20px;
 }
 
-/* CARDS */
 .card {
   background:#1e293b;
   padding:20px;
   border-radius:12px;
 }
 
-/* SEARCH */
-.search {
-  display:flex;
-  gap:10px;
-  margin:20px 0;
-}
-
 /* TABLE */
-table {
-  width:100%;
-  border-collapse:collapse;
-}
-th {
-  background:#1e293b;
-  padding:12px;
-}
-td {
-  padding:12px;
-  border-bottom:1px solid #334155;
-}
+table {width:100%;border-collapse:collapse;margin-bottom:30px;}
+th {background:#1e293b;padding:12px;}
+td {padding:12px;border-bottom:1px solid #334155;}
 
-/* BADGES */
-.badge {
-  padding:4px 10px;
-  border-radius:20px;
-  font-size:12px;
-}
+.badge {padding:4px 10px;border-radius:20px;font-size:12px;}
 .lunch {color:#22c55e;}
 .dinner {color:#3b82f6;}
 .breakfast {color:#f59e0b;}
+
+.date-title {
+  margin-top:30px;
+  font-size:18px;
+  font-weight:bold;
+}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login">
-  <div class="login-box">
-    <h2>Admin Login</h2>
-    <input id="pass" type="password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
-    <p id="err" style="color:red;display:none;">Wrong password</p>
-  </div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" style="display:none">
-
 <header>
   <h2>Waste<span style="color:#22c55e;">Wise</span>Web</h2>
-  <button onclick="logout()" style="background:#ef4444;color:white;padding:10px;border:none;border-radius:8px;">Logout</button>
 </header>
 
 <div class="container">
@@ -128,99 +69,96 @@ td {
   <div class="card"><p>Revenue</p><h1 id="rev">₹0</h1></div>
 </div>
 
-<!-- SEARCH -->
-<div class="search">
-  <input id="search" placeholder="Search..." oninput="render()">
-  <button onclick="load()" style="background:#22c55e;padding:10px;border:none;border-radius:8px;">Refresh</button>
-  <button onclick="exportCSV()" style="background:#3b82f6;color:white;padding:10px;border:none;border-radius:8px;">Export</button>
-</div>
+<!-- CHART -->
+<canvas id="chart"></canvas>
 
-<!-- TABLE -->
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Meal</th>
-<th>Date</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
+<!-- DATA -->
+<div id="data"></div>
 
-</div>
 </div>
 
 <script>
-const PASSWORD="admin123";
+const SUPABASE_URL = "YOUR_URL";
+const SUPABASE_KEY = "YOUR_KEY";
 
-// LOGIN
-function login(){
-  const input=document.getElementById("pass").value.trim();
-  if(input===PASSWORD){
-    document.getElementById("login").style.display="none";
-    document.getElementById("dashboard").style.display="block";
-    load();
-  }else{
-    document.getElementById("err").style.display="block";
-  }
+async function load(){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/guest_bookings`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const data = await res.json();
+
+  render(data);
 }
 
-function logout(){
-  location.reload();
-}
+function render(data){
+  let total = data.length;
+  let today = 0;
+  let revenue = total * 80;
 
-// DATA (replace with Supabase later)
-let data=[];
-
-function load(){
-  data=[
-    {name:"Lakshya",phone:"9876543210",meal:"Lunch",date:"2025-04-28"},
-    {name:"Rohit",phone:"9123456780",meal:"Dinner",date:"2025-04-28"},
-    {name:"Aman",phone:"9012345678",meal:"Breakfast",date:"2025-04-27"}
-  ];
-  render();
-}
-
-// RENDER
-function render(){
-  const s=document.getElementById("search").value.toLowerCase();
-  const t=document.getElementById("table");
-  t.innerHTML="";
-
-  let total=0,today=0;
+  let grouped = {};
 
   data.forEach(d=>{
-    if((d.name+d.phone+d.meal).toLowerCase().includes(s)){
-      t.innerHTML+=`
+    let date = new Date(d.booked_at);
+    let day = date.toISOString().split('T')[0];
+
+    if(day === new Date().toISOString().split('T')[0]) today++;
+
+    if(!grouped[day]) grouped[day]=[];
+    grouped[day].push(d);
+  });
+
+  document.getElementById("total").innerText = total;
+  document.getElementById("today").innerText = today;
+  document.getElementById("rev").innerText = "₹"+revenue;
+
+  let html = "";
+
+  Object.keys(grouped).sort().reverse().forEach(day=>{
+    html += `<div class="date-title">${day}</div>
+    <table>
+    <tr><th>Name</th><th>Phone</th><th>Meal</th><th>Time</th></tr>`;
+
+    grouped[day].forEach(d=>{
+      let time = new Date(d.booked_at).toLocaleTimeString();
+
+      html += `
       <tr>
         <td>${d.name}</td>
         <td>${d.phone}</td>
-        <td><span class="badge ${d.meal.toLowerCase()}">${d.meal}</span></td>
-        <td>${d.date}</td>
+        <td><span class="badge ${d.meal_type.toLowerCase()}">${d.meal_type}</span></td>
+        <td>${time}</td>
       </tr>`;
-    }
-    total++;
+    });
+
+    html += "</table>";
   });
 
-  document.getElementById("total").innerText=total;
-  document.getElementById("today").innerText=total;
-  document.getElementById("rev").innerText="₹"+(total*80);
-}
+  document.getElementById("data").innerHTML = html;
 
-// CSV EXPORT
-function exportCSV(){
-  let csv="Name,Phone,Meal,Date\n";
+  // CHART
+  let counts = {};
   data.forEach(d=>{
-    csv+=`${d.name},${d.phone},${d.meal},${d.date}\n`;
+    let day = new Date(d.booked_at).toISOString().split('T')[0];
+    counts[day] = (counts[day]||0)+1;
   });
 
-  const blob=new Blob([csv]);
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="data.csv";
-  a.click();
+  new Chart(document.getElementById("chart"), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{
+        label: 'Bookings',
+        data: Object.values(counts)
+      }]
+    }
+  });
 }
+
+load();
 </script>
 
 </body>
