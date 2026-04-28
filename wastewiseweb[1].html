@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WasteWiseWeb — Guest Meal Booking</title>
+<style>
+  :root {
+    --green: #1a6b3a;
+    --green-light: #2d9e58;
+    --green-pale: #e8f5ee;
+    --amber: #e07b00;
+    --amber-pale: #fff4e0;
+    --red: #c0392b;
+    --bg: #f4f7f4;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7b6b;
+    --border: #d4e4d4;
+    --shadow: 0 4px 24px rgba(26,107,58,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--green);
+    color: white;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  }
+  .logo {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: #7ddfaa; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  #clock {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
+  }
+  /* Hidden admin trigger — only visible on triple-click of logo */
+  #admin-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    width: 24px;
+    height: 24px;
+  }
+
+  /* MAIN */
+  main { max-width: 520px; margin: 0 auto; padding: 28px 16px 60px; }
+
+  /* MEAL CARD */
+  .meal-hero {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    border: 1.5px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .meal-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: var(--green-light);
+  }
+  .meal-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+  .badge-live { background: #d4f7e5; color: #1a6b3a; }
+  .badge-soon { background: var(--amber-pale); color: var(--amber); }
+  .badge-upcoming { background: #f0f0f0; color: #555; }
+  .badge-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+  .badge-live .badge-dot { background: #1a6b3a; }
+  .badge-soon .badge-dot { background: var(--amber); }
+  .badge-upcoming .badge-dot { background: #999; animation: none; }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(1.4); }
+  }
+  .meal-name {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+  .meal-time-info {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .meal-countdown {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--amber);
+    margin-bottom: 16px;
+  }
+  .meal-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .meal-item-tag {
+    background: var(--green-pale);
+    color: var(--green);
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .price-label { font-size: 0.85rem; color: var(--muted); }
+  .price-value {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--green);
+  }
+
+  /* UPCOMING STRIP */
+  .upcoming-strip {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    border: 1.5px solid var(--border);
+  }
+  .upcoming-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .upcoming-list { display: flex; flex-direction: column; gap: 6px; }
+  .upcoming-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .upcoming-item-name { color: var(--text); font-weight: 500; }
+  .upcoming-item-time { color: var(--muted); font-size: 0.8rem; }
+
+  /* BOOKING FORM */
+  .form-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--border);
+  }
+  .form-title {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .field { margin-bottom: 16px; }
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 0.95rem;
+    background: #fafafa;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  input:focus {
+    border-color: var(--green-light);
+    box-shadow: 0 0 0 3px rgba(45,158,88,0.12);
+    background: #fff;
+  }
+  .book-btn {
+    width: 100%;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .book-btn:hover { background: var(--green-light); }
+  .book-btn:active { transform: scale(0.98); }
+  .book-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* SCHEDULE TABLE */
+  .schedule-section { margin-top: 28px; }
+  .section-title {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .schedule-grid {
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+  }
+  .schedule-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row.active-row { background: var(--green-pale); }
+  .schedule-meal-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+  .schedule-row.active-row .schedule-meal-dot { background: var(--green); }
+  .schedule-meal-name { font-size: 0.9rem; font-weight: 500; flex: 1; }
+  .schedule-meal-hrs { font-size: 0.8rem; color: var(--muted); }
+  .live-tag {
+    background: var(--green);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-left: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  /* MODAL — RECEIPT */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    background: var(--green);
+    color: white;
+    padding: 20px 24px 16px;
+  }
+  .modal-header h2 {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+  .modal-header p { font-size: 0.82rem; opacity: 0.8; }
+  .receipt-body { padding: 20px 24px; }
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.88rem;
+  }
+  .receipt-row:last-child { border-bottom: none; }
+  .receipt-key { color: var(--muted); font-weight: 500; }
+  .receipt-val { font-weight: 600; text-align: right; max-width: 58%; }
+  .token-box {
+    background: var(--green-pale);
+    border: 2px dashed var(--green-light);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .token-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .token-number {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: 2px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 24px 20px;
+  }
+  .btn-outline {
+    flex: 1;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .btn-primary {
+    flex: 1;
+    background: var(--green);
+    border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+  }
+
+  /* ADMIN MODAL */
+  .admin-modal {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 380px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .admin-modal-header {
+    background: #1a1a2e;
+    color: white;
+    padding: 24px;
+    text-align: center;
+  }
+  .admin-modal-header h2 {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+  .admin-modal-header p { font-size: 0.8rem; opacity: 0.6; margin-top: 4px; }
+  .admin-form { padding: 24px; }
+  .admin-form input {
+    margin-bottom: 14px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+  }
+  .admin-login-btn {
+    width: 100%;
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .admin-error {
+    color: var(--red);
+    font-size: 0.82rem;
+    text-align: center;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  @media print {
+    body > *:not(.modal-overlay) { display: none; }
+    .modal-overlay { position: static; background: none; }
+    .modal-actions { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Triple-click the logo text to reveal admin login -->
+  <div class="logo" id="logo-click" style="cursor:default;">Waste<span>Wise</span>Web</div>
+  <div class="header-right">
+    <div id="clock">--:--:--</div>
+  </div>
+</header>
+
+<main>
+  <!-- ACTIVE MEAL CARD -->
+  <div class="meal-hero" id="meal-hero">
+    <div class="meal-status-badge badge-live" id="status-badge">
+      <div class="badge-dot"></div>
+      <span id="status-text">Live Now</span>
+    </div>
+    <div class="meal-name" id="meal-name">Loading…</div>
+    <div class="meal-time-info" id="meal-time-info"></div>
+    <div class="meal-countdown" id="meal-countdown"></div>
+    <div class="meal-items" id="meal-items"></div>
+    <div class="price-row">
+      <div class="price-label">Per person</div>
+      <div class="price-value">₹80</div>
+    </div>
+  </div>
+
+  <!-- UPCOMING MEALS STRIP -->
+  <div class="upcoming-strip" id="upcoming-strip">
+    <div class="upcoming-label">Today's Schedule</div>
+    <div class="upcoming-list" id="upcoming-list"></div>
+  </div>
+
+  <!-- BOOKING FORM -->
+  <div class="form-card">
+    <div class="form-title">Book Your Meal</div>
+    <div class="field">
+      <label>Full Name</label>
+      <input type="text" id="inp-name" placeholder="Enter your name" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="tel" id="inp-phone" placeholder="10-digit mobile number" maxlength="10">
+    </div>
+    <div class="field">
+      <label>Email (optional)</label>
+      <input type="email" id="inp-email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <button class="book-btn" id="book-btn" onclick="submitBooking()">Book Meal — ₹80</button>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="schedule-section">
+    <div class="section-title">Full Meal Schedule</div>
+    <div class="schedule-grid" id="schedule-grid"></div>
+  </div>
+</main>
+
+<footer>WasteWiseWeb · Guest Meal Booking · Powered by Supabase</footer>
+
+<!-- RECEIPT MODAL -->
+<div class="modal-overlay" id="receipt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🎉 Booking Confirmed!</h2>
+      <p>Show this receipt at the counter</p>
+    </div>
+    <div class="receipt-body" id="receipt-body"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeReceipt()">Close</button>
+      <button class="btn-primary" onclick="printReceipt()">🖨 Print Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h2>🔐 Admin Access</h2>
+      <p>Restricted to authorized personnel only</p>
+    </div>
+    <div class="admin-form">
+      <input type="password" id="admin-pass-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkAdminPass()">
+      <button class="admin-login-btn" onclick="checkAdminPass()">Access Dashboard</button>
+      <div class="admin-error" id="admin-error">❌ Incorrect password. Try again.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SUPABASE CONFIG — Replace these with your actual values
+// ============================================================
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// ============================================================
+// ADMIN PASSWORD — Change this to your secret password
+// ============================================================
+const ADMIN_PASSWORD = 'wastewise@admin2025';
+
+// ============================================================
+// MEAL SCHEDULE
+// ============================================================
+const MEALS = [
+  {
+    id: 'breakfast',
+    name: 'Breakfast',
+    start: [7, 30],
+    end: [9, 0],
+    items: ['Idli & Sambar', 'Poha', 'Bread & Butter', 'Tea / Coffee'],
+    amount: 80
+  },
+  {
+    id: 'lunch',
+    name: 'Lunch',
+    start: [12, 30],
+    end: [14, 30],
+    items: ['Rice', 'Dal', 'Sabzi', 'Roti', 'Salad', 'Curd'],
+    amount: 80
+  },
+  {
+    id: 'snacks',
+    name: 'Snacks',
+    start: [16, 30],
+    end: [17, 30],
+    items: ['Samosa', 'Chai', 'Biscuits', 'Fruit'],
+    amount: 80
+  },
+  {
+    id: 'dinner',
+    name: 'Dinner',
+    start: [19, 30],
+    end: [21, 30],
+    items: ['Rice', 'Dal Tadka', 'Paneer / Veg', 'Roti', 'Salad'],
+    amount: 80
+  }
+];
+
+function nowMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function toMin(h, m) { return h * 60 + m; }
+function fmt12(h, m) {
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function getMealStatus() {
+  const now = nowMinutes();
+  let liveMeal = null, soonMeal = null, nextMeal = null;
+  let minDiff = Infinity;
+
+  for (const m of MEALS) {
+    const s = toMin(...m.start), e = toMin(...m.end);
+    if (now >= s && now < e) { liveMeal = m; break; }
+    if (now < s) {
+      const diff = s - now;
+      if (diff <= 120 && diff < minDiff) { soonMeal = m; minDiff = diff; }
+      else if (!nextMeal) nextMeal = m;
+    }
+  }
+  return { liveMeal, soonMeal, nextMeal };
+}
+
+let countdownInterval = null;
+
+function updateMealCard() {
+  const { liveMeal, soonMeal, nextMeal } = getMealStatus();
+  const badge = document.getElementById('status-badge');
+  const mealName = document.getElementById('meal-name');
+  const mealTimeInfo = document.getElementById('meal-time-info');
+  const mealCountdown = document.getElementById('meal-countdown');
+  const mealItems = document.getElementById('meal-items');
+
+  const show = liveMeal || soonMeal || MEALS[0];
+  badge.className = 'meal-status-badge';
+
+  if (liveMeal) {
+    badge.classList.add('badge-live');
+    document.getElementById('status-text').textContent = 'Live Now';
+    mealCountdown.textContent = '';
+    mealTimeInfo.textContent = `${fmt12(...liveMeal.start)} – ${fmt12(...liveMeal.end)}`;
+  } else if (soonMeal) {
+    badge.classList.add('badge-soon');
+    const mins = toMin(...soonMeal.start) - nowMinutes();
+    const h = Math.floor(mins/60), m = mins%60;
+    document.getElementById('status-text').textContent = 'Starting Soon';
+    mealTimeInfo.textContent = `${fmt12(...soonMeal.start)} – ${fmt12(...soonMeal.end)}`;
+    mealCountdown.textContent = h > 0 ? `Starts in ${h}h ${m}m` : `Starts in ${m} min`;
+  } else {
+    badge.classList.add('badge-upcoming');
+    const nm = nextMeal || MEALS[0];
+    document.getElementById('status-text').textContent = 'Next Meal';
+    mealTimeInfo.textContent = `${fmt12(...nm.start)} – ${fmt12(...nm.end)}`;
+    mealCountdown.textContent = '';
+  }
+
+  const meal = liveMeal || soonMeal || nextMeal || MEALS[0];
+  mealName.textContent = meal.name;
+  mealItems.innerHTML = meal.items.map(i => `<span class="meal-item-tag">${i}</span>`).join('');
+
+  // Upcoming strip
+  const upcomingList = document.getElementById('upcoming-list');
+  upcomingList.innerHTML = MEALS.map(m => {
+    const isActive = liveMeal && liveMeal.id === m.id;
+    const isSoon = soonMeal && soonMeal.id === m.id;
+    return `<div class="upcoming-item">
+      <span class="upcoming-item-name" style="${isActive?'color:var(--green);font-weight:700':isSoon?'color:var(--amber);font-weight:600':''}">
+        ${m.name}${isActive?' 🟢':''}${isSoon?' ⏳':''}
+      </span>
+      <span class="upcoming-item-time">${fmt12(...m.start)} – ${fmt12(...m.end)}</span>
+    </div>`;
+  }).join('');
+
+  // Schedule grid
+  const grid = document.getElementById('schedule-grid');
+  grid.innerHTML = MEALS.map(m => {
+    const isActive = liveMeal && liveMeal.id === m.id;
+    return `<div class="schedule-row${isActive?' active-row':''}">
+      <div class="schedule-meal-dot"></div>
+      <div class="schedule-meal-name">
+        ${m.name}
+        ${isActive?'<span class="live-tag">LIVE</span>':''}
+      </div>
+      <div class="schedule-meal-hrs">${fmt12(...m.start)}–${fmt12(...m.end)}</div>
+    </div>`;
+  }).join('');
+}
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+setInterval(updateMealCard, 30000);
+updateMealCard();
+
+// ============================================================
+// BOOKING
+// ============================================================
+function generateToken() {
+  return 'WWG-' + Math.floor(1000 + Math.random() * 9000);
+}
+function generateBookingId() {
+  return 'BK' + Date.now().toString(36).toUpperCase();
+}
+
+async function submitBooking() {
+  const name = document.getElementById('inp-name').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+
+  if (!name) { alert('Please enter your name.'); return; }
+  if (!/^\d{10}$/.test(phone)) { alert('Please enter a valid 10-digit phone number.'); return; }
+
+  const btn = document.getElementById('book-btn');
+  btn.disabled = true;
+  btn.textContent = 'Booking…';
+
+  const { liveMeal, soonMeal, nextMeal } = getMealStatus();
+  const meal = liveMeal || soonMeal || nextMeal || MEALS[0];
+  const token = generateToken();
+  const bookingId = generateBookingId();
+  const bookedAt = new Date().toISOString();
+
+  const record = {
+    booking_id: bookingId,
+    name,
+    phone,
+    email: email || null,
+    meal_type: meal.name,
+    meal_id: meal.id,
+    amount: 80,
+    token,
+    booked_at: bookedAt
+  };
+
+  // Save to Supabase
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/guest_bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(record)
+      });
+      if (!res.ok) throw new Error('Supabase error: ' + res.status);
+    } catch(e) {
+      console.error('Save error:', e);
+      alert('Could not save booking. Please check your connection.');
+      btn.disabled = false;
+      btn.textContent = 'Book Meal — ₹80';
+      return;
+    }
+  } else {
+    // Demo mode — just show receipt without saving
+    console.log('Demo mode — configure Supabase to save:', record);
+  }
+
+  showReceipt(record, meal);
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-phone').value = '';
+  document.getElementById('inp-email').value = '';
+  btn.disabled = false;
+  btn.textContent = 'Book Meal — ₹80';
+}
+
+function showReceipt(r, meal) {
+  const d = new Date(r.booked_at);
+  const dateStr = d.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const timeStr = d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('receipt-body').innerHTML = `
+    <div class="token-box">
+      <div class="token-label">Your Token Number</div>
+      <div class="token-number">${r.token}</div>
+    </div>
+    <div class="receipt-row"><span class="receipt-key">Booking ID</span><span class="receipt-val">${r.booking_id}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Name</span><span class="receipt-val">${r.name}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Phone</span><span class="receipt-val">${r.phone}</span></div>
+    ${r.email ? `<div class="receipt-row"><span class="receipt-key">Email</span><span class="receipt-val">${r.email}</span></div>` : ''}
+    <div class="receipt-row"><span class="receipt-key">Meal</span><span class="receipt-val">${r.meal_type}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Date</span><span class="receipt-val">${dateStr}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Time</span><span class="receipt-val">${timeStr}</span></div>
+    <div class="receipt-row"><span class="receipt-key">Amount Paid</span><span class="receipt-val" style="color:var(--green)">₹${r.amount}</span></div>
+    <div style="margin-top:14px;padding:10px 12px;background:#f7fdf9;border-radius:10px;font-size:0.78rem;color:var(--muted);text-align:center;">
+      Present this token at the mess counter. Valid for today only.
+    </div>
+  `;
+  document.getElementById('receipt-modal').classList.add('show');
+}
+
+function closeReceipt() { document.getElementById('receipt-modal').classList.remove('show'); }
+function printReceipt() { window.print(); }
+
+// ============================================================
+// ADMIN PANEL — Triple-click logo to open
+// ============================================================
+let clickCount = 0, clickTimer = null;
+document.getElementById('logo-click').addEventListener('click', () => {
+  clickCount++;
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => { clickCount = 0; }, 600);
+  if (clickCount >= 3) {
+    clickCount = 0;
+    document.getElementById('admin-modal').classList.add('show');
+    document.getElementById('admin-pass-input').focus();
+  }
+});
+
+function checkAdminPass() {
+  const input = document.getElementById('admin-pass-input').value;
+  if (input === ADMIN_PASSWORD) {
+    document.getElementById('admin-modal').classList.remove('show');
+    document.getElementById('admin-pass-input').value = '';
+    window.location.href = 'admin.html';
+  } else {
+    document.getElementById('admin-error').style.display = 'block';
+    document.getElementById('admin-pass-input').value = '';
+    setTimeout(() => { document.getElementById('admin-error').style.display = 'none'; }, 3000);
+  }
+}
+
+// Close modals on overlay click
+document.getElementById('receipt-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeReceipt();
+});
+document.getElementById('admin-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+</script>
+</body>
+</html>
